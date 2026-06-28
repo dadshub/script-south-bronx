@@ -254,12 +254,17 @@ end
 
 local function DoRejoin()
     if not Configuration.Main_Settings["Auto Rejoiner"] then return end
+
     Configuration.Main_Settings["Autofarming"] = false
     Configuration.Statistics["Times Rejoined"] += 1
+
     queue_on_teleport([[
-        queue_on_teleport("task.wait(15)\ngetgenv().AutoRejoinerEnabled = true\nloadstring(game:HttpGet('https://pastefy.app/drlp4KfE/raw'))()")
+        task.wait(15)
+        getgenv().AutoRejoinerEnabled = true
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/dadshub/script-south-bronx/refs/heads/main/bomboclatdawg.lua"))()
     ]])
-    TeleportService:Teleport(10179538382)
+
+    TeleportService:Teleport(game.PlaceId)
 end
 
 local function ScavengeInventory()
