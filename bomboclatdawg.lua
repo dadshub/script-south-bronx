@@ -1072,9 +1072,9 @@ end
 local KeybindList = Library:KeybindList("Keybinds")
 
 local Window = Library:Window({
-    Name = "Exile",
+    Name = "Bomboclatt Multifarm",
     SubName = "Multifarm - South Bronx",
-    Logo = "95259225424429", -- Replace with your logo asset ID
+    Logo = "12623079321", -- Replace with your logo asset ID
 })
 
 -- ========================================
