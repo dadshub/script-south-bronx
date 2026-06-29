@@ -254,17 +254,12 @@ end
 
 local function DoRejoin()
     if not Configuration.Main_Settings["Auto Rejoiner"] then return end
-
     Configuration.Main_Settings["Autofarming"] = false
     Configuration.Statistics["Times Rejoined"] += 1
-
     queue_on_teleport([[
-        task.wait(15)
-        getgenv().AutoRejoinerEnabled = true
-        loadstring(game:HttpGet("https://raw.githubusercontent.com/dadshub/script-south-bronx/refs/heads/main/bomboclatdawg.lua"))()
+        queue_on_teleport("task.wait(15)\ngetgenv().AutoRejoinerEnabled = true\nloadstring(game:HttpGet('https://pastefy.app/drlp4KfE/raw'))()")
     ]])
-
-    TeleportService:Teleport(game.PlaceId)
+    TeleportService:Teleport(10179538382)
 end
 
 local function ScavengeInventory()
@@ -1072,9 +1067,9 @@ end
 local KeybindList = Library:KeybindList("Keybinds")
 
 local Window = Library:Window({
-    Name = "Bomboclatt Multifarm",
+    Name = "Exile",
     SubName = "Multifarm - South Bronx",
-    Logo = "12623079321", -- Replace with your logo asset ID
+    Logo = "95259225424429", -- Replace with your logo asset ID
 })
 
 -- ========================================
@@ -1362,77 +1357,58 @@ end
 ConnectDeathHandler(Player.Character)
 Player.CharacterAdded:Connect(ConnectDeathHandler)
 
+-- ========================================
+-- STATISTICS UPDATE
+-- ========================================
+
 task.spawn(function()
-    task.wait(2)
-
     local StartTime = os.clock()
+    task.wait(2)
     local StartCash = GetCurrentCashAmount()
-
     while task.wait(1) do
-        pcall(function()
+        local Elapsed = math.floor(os.clock() - StartTime)
+        Configuration.Statistics["Runtime"]   = Elapsed
+        Configuration.Statistics["Cash Made"] = GetCurrentCashAmount() - StartCash
 
-            local Elapsed = math.floor(os.clock() - StartTime)
+        -- Update labels using :SetText()
+        StatusLabel:SetText("[📊] Status: " .. Configuration.State["Status"])
 
-            Configuration.Statistics["Runtime"] = Elapsed
-            Configuration.Statistics["Cash Made"] = GetCurrentCashAmount() - StartCash
+        TimesRejoinedLabel:SetText(string.format("[🔄️] Times Rejoined: %d", Configuration.Statistics["Times Rejoined"]))
+        RuntimeLabel:SetText(string.format("[⏰] Runtime: %02d:%02d:%02d",
+            math.floor(Elapsed / 3600),
+            math.floor((Elapsed % 3600) / 60),
+            Elapsed % 60
+        ))
+        local cashMade = Configuration.Statistics["Cash Made"]
+        local cashMadeStr = (cashMade < 0 and "-" or "") .. GetCommaValue(math.abs(cashMade))
+        CashMadeLabel:SetText("[💸] Cash Made: " .. cashMadeStr)
+        ChipsFedLabel:SetText(string.format("[🍟] Chips Fed: %d", Configuration.Statistics["Chips Fed"]))
+        CardsSwipedLabel:SetText(string.format("[💳] Cards Swiped: %d", Configuration.Statistics["Cards Swiped"]))
+        MarshmallowsSoldLabel:SetText(string.format("[🧂] Marshmallows Sold: %d", Configuration.Statistics["Marshmallows Sold"]))
+    end
+end)
 
-            if StatusLabel then
-                StatusLabel:SetText("[📊] Status: " .. tostring(Configuration.State["Status"]))
-            end
+-- ========================================
+-- WEBHOOK LOOP
+-- ========================================
 
-            if TimesRejoinedLabel then
-                TimesRejoinedLabel:SetText(
-                    "[🔄️] Times Rejoined: " ..
-                    GetCommaValue(Configuration.Statistics["Times Rejoined"])
-                )
-            end
+task.spawn(function()
+    while true do
+        task.wait(Configuration.Webhook_Settings["Webhook Intervals"] * 60)
+        if Configuration.Webhook_Settings["Send Webhooks"] then
+            SendWebhook()
+        end
+    end
+end)
 
-            if RuntimeLabel then
-                RuntimeLabel:SetText(
-                    "[⏰] Runtime: " ..
-                    FormatRuntime(Configuration.Statistics["Runtime"])
-                )
-            end
+-- ========================================
+-- ANTI-AFK
+-- ========================================
 
-            if CashMadeLabel then
-                local CashMade = Configuration.Statistics["Cash Made"]
-
-                local CashText =
-                    (CashMade < 0 and "-" or "") ..
-                    GetCommaValue(math.abs(CashMade))
-
-                CashMadeLabel:SetText(
-                    "[💸] Cash Made: $" .. CashText
-                )
-            end
-
-            if ChipsFedLabel then
-                ChipsFedLabel:SetText(
-                    "[🍟] Chips Fed: " ..
-                    GetCommaValue(Configuration.Statistics["Chips Fed"])
-                )
-            end
-
-            if CardsSwipedLabel then
-                CardsSwipedLabel:SetText(
-                    "[💳] Cards Swiped: " ..
-                    GetCommaValue(Configuration.Statistics["Cards Swiped"])
-                )
-            end
-
-            if MarshmallowsSoldLabel then
-                MarshmallowsSoldLabel:SetText(
-                    "[🧂] Marshmallows Sold: " ..
-                    GetCommaValue(Configuration.Statistics["Marshmallows Sold"])
-                )
-            end
-
-            if Configuration.Goal_Settings.Enabled then
-                if GetCurrentCashAmount() >= Configuration.Goal_Settings["Target Amount"] then
-                    game:GetService("Players").LocalPlayer:Kick("Goal reached.")
-                end
-            end
-
-        end)
+Player.Idled:Connect(function()
+    if Configuration.Main_Settings["Autofarming"] then
+        local VirtualUser = cloneref(game:GetService("VirtualUser"))
+        VirtualUser:CaptureController()
+        VirtualUser:ClickButton2(Vector2.new())
     end
 end)
